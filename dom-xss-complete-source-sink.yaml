@@ -1,0 +1,41 @@
+id: dom-xss-complete-source-sink
+
+info:
+  name: Full DOM XSS Source and Sink Combo Detector
+  author: legionhunter
+  severity: info
+  description: Detects presence of both user-controlled DOM sources and execution sinks in the same page
+  tags: dom,xss,client-side,javascript
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    matchers-condition: and  # Ensure both source and sink are present
+    matchers:
+      # Match DOM Sources (user-controlled input sources)
+      - type: regex
+        part: body
+        regex:
+          - '(location\.(href|search|hash|pathname|protocol|hostname|port|origin)|document\.(URL|documentURI|baseURI|referrer)|window\.name|localStorage\.getItem|sessionStorage\.getItem|event\.(data|target\.value|target\.innerHTML)|new\s+URLSearchParams|new\s+URL\()'
+
+      # Match DOM Sinks (execution points where XSS can occur)
+      - type: regex
+        part: body
+        regex:
+          - '(eval\s*\(|Function\s*\(|setTimeout\s*\(|setInterval\s*\(|document\.write(ln)?\s*\(|innerHTML\s*=|outerHTML\s*=|insertAdjacentHTML\s*\(|on\w+\s*=|src\s*=|href\s*=|window\.(location|open)\s*=|document\.location\s*=)'
+
+    extractors:
+      # Extract DOM Source and Sink data if both are present
+      - name: "DOM Source"
+        type: regex
+        part: body
+        regex:
+          - '(location\.(href|search|hash|pathname|protocol|hostname|port|origin)|document\.(URL|documentURI|baseURI|referrer)|window\.name|localStorage\.getItem|sessionStorage\.getItem|event\.(data|target\.value|target\.innerHTML)|new\s+URLSearchParams|new\s+URL\()'
+
+      - name: "DOM Sink"
+        type: regex
+        part: body
+        regex:
+          - '(eval\s*\(|Function\s*\(|setTimeout\s*\(|setInterval\s*\(|document\.write(ln)?\s*\(|innerHTML\s*=|outerHTML\s*=|insertAdjacentHTML\s*\(|on\w+\s*=|src\s*=|href\s*=|window\.(location|open)\s*=|document\.location\s*=)'
